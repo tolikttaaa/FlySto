@@ -1,5 +1,6 @@
 package com.ttaaa.flysto.pathsimplifier.model
 
+import com.ttaaa.flysto.pathsimplifier.utils.EARTH_RADIUS
 import kotlin.math.abs
 import kotlin.math.acos
 import kotlin.math.asin
@@ -16,53 +17,63 @@ open class SphericalPoint(
      * Calculate perpendicular distance from a point to a great circle arc
      * Uses spherical geometry for accurate distance calculation
      */
-    fun perpendicularDistanceToGreatCircle(
-        lineStart: SphericalPoint,
-        lineEnd: SphericalPoint,
-        radius: Double,
+    fun perpendicularDistanceToGreatCircleSegment(
+        segStart: SphericalPoint,
+        segEnd: SphericalPoint,
+        radius: Double = EARTH_RADIUS,
     ): Double {
-        // Convert to radians
-        val lat1 = Math.toRadians(this.latitude)
-        val lon1 = Math.toRadians(this.longitude)
-        val lat2 = Math.toRadians(lineStart.latitude)
-        val lon2 = Math.toRadians(lineStart.longitude)
-        val lat3 = Math.toRadians(lineEnd.latitude)
-        val lon3 = Math.toRadians(lineEnd.longitude)
-
-        // Calculate cross-track distance (perpendicular distance to great circle)
-        val dLon13 = lon1 - lon3
-        val dLon23 = lon2 - lon3
-
-        val a = sin(lat1) * sin(lat3) + cos(lat1) * cos(lat3) * cos(dLon13)
-
-        val c1 = acos(a.coerceIn(-1.0, 1.0))
-
-        // Calculate bearing from lineEnd to both points
-        val bearing13 = atan2(sin(dLon13) * cos(lat1),
-            cos(lat3) * sin(lat1) - sin(lat3) * cos(lat1) * cos(dLon13))
-        val bearing23 = atan2(sin(dLon23) * cos(lat2),
-            cos(lat3) * sin(lat2) - sin(lat3) * cos(lat2) * cos(dLon23))
-
-        val dBearing = bearing13 - bearing23
+        // Angular distance from start to end
+        val Δ13 = angularDistance(segStart, this)
+        val θ13 = initialBearing(segStart, this)
+        val θ12 = initialBearing(segStart, segEnd)
 
         // Cross-track distance
-        val crossTrackDistance = abs(asin(sin(c1) * sin(dBearing))) * radius
+        val dXt = asin(sin(Δ13) * sin(θ13 - θ12)) * radius
 
-        return crossTrackDistance
+        // Along-track distance (how far along the segment the projection lies)
+        val dAt = acos(cos(Δ13) / cos(dXt / radius)) * radius
+
+        // Total segment length
+        val segmentLength = angularDistance(segStart, segEnd) * radius
+
+        return when {
+            dAt < 0 -> haversineDistance(this, segStart)
+            dAt > segmentLength -> haversineDistance(this, segEnd)
+            else -> abs(dXt)
+        }
     }
-
+    
     companion object {
-        @JvmStatic
-        fun haversineDistance(p1: SphericalPoint, p2: SphericalPoint, radius: Double = 1.0): Double {
-            val dLat = Math.toRadians(p2.latitude - p1.latitude)
-            val dLon = Math.toRadians(p2.longitude - p1.longitude)
-            val lat1 = Math.toRadians(p1.latitude)
-            val lat2 = Math.toRadians(p2.latitude)
+        // Angular distance on a sphere (radians)
+        fun angularDistance(a: SphericalPoint, b: SphericalPoint): Double {
+            val aLat = Math.toRadians(a.latitude)
+            val bLat = Math.toRadians(b.latitude)
+            val aLong = Math.toRadians(a.longitude)
+            val bLong = Math.toRadians(b.longitude)
 
-            val a = sin(dLat/2) * sin(dLat/2) + sin(dLon/2) * sin(dLon/2) * cos(lat1) * cos(lat2)
-            val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+            val dLat = bLat - aLat
+            val dLong = bLong - aLong
 
-            return radius * c
+            val a = sin(dLat / 2) * sin(dLat / 2) +
+                    cos(aLat) * cos(bLat) * sin(dLong / 2) * sin(dLong / 2)
+            return 2 * atan2(sqrt(a), sqrt(1 - a))
+        }
+
+        // Initial bearing from point A to B in radians
+        fun initialBearing(a: SphericalPoint, b: SphericalPoint): Double {
+            val aLat = Math.toRadians(a.latitude)
+            val aLong = Math.toRadians(a.longitude)
+            val bLat = Math.toRadians(b.latitude)
+            val bLong = Math.toRadians(b.longitude)
+
+            val y = sin(bLong - aLong) * cos(bLat)
+            val x = cos(aLat) * sin(bLat) - sin(aLat) * cos(bLat) * cos(bLong - aLong)
+            return atan2(y, x)
+        }
+
+        // Haversine formula
+        fun haversineDistance(a: SphericalPoint, b: SphericalPoint, radius: Double = EARTH_RADIUS): Double {
+            return radius * angularDistance(a, b)
         }
     }
 }

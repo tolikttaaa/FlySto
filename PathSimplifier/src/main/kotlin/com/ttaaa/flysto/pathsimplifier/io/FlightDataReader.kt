@@ -13,8 +13,7 @@ object FlightDataReader {
     private val logger = LoggerFactory.getLogger(FlightDataReader::class.java)
 
     fun readFlightPath(filename: String): FlightPath {
-        val points = mutableListOf<SphericalPoint>()
-        var invalidLines = 0
+        var points = listOf<SphericalPoint>()
 
         try {
             val file = File(filename)
@@ -28,37 +27,54 @@ object FlightDataReader {
                     reader, CSVFormat.DEFAULT.builder().setHeader()
                         .setSkipHeaderRecord(true).build()
                 ).use { parser ->
-                    for (record in parser) {
-                        try {
-                            val lat = record.get("lat").toDouble()
-                            val lng = record.get("lng").toDouble()
-
-                            if (!isValidCoordinate(lat, lng)) {
-                                throw IllegalArgumentException("Invalid coordinate: $lat, $lng")
-                            }
-
-                            val point = SphericalPoint(lat.toDouble(), lng.toDouble())
-                            points.add(point)
-                            logger.trace("Processing point: {}", point)
-                        } catch (_: Exception) {
-                            invalidLines++
-                            logger.warn("Skipping row with invalid params: $record")
-                        }
-                    }
+                    points = parseRows(parser)
                 }
             }
-
         } catch (ex: Exception) {
             logger.error("Error reading file: ${ex.message}")
             error("Error reading file: ${ex.message}")
         }
 
         logger.info("Successfully parsed ${points.size} points")
-        if (invalidLines > 0) {
-            logger.warn("Skipped $invalidLines invalid lines")
+        return FlightPath(points, EARTH_RADIUS)
+    }
+
+    private fun parseRows(parser: CSVParser): List<SphericalPoint> {
+        val rows = mutableListOf<SphericalPoint>()
+        val (latInd, lngInd) = getLatLngInd(parser.headerMap)
+        for (record in parser) {
+            try {
+                val lat = record.get(latInd).toDouble()
+                val lng = record.get(lngInd).toDouble()
+
+                require(isValidCoordinate(lat, lng))
+
+                val point = SphericalPoint(lat.toDouble(), lng.toDouble())
+                rows.add(point)
+                logger.trace("Processing point: {}", point)
+            } catch (ex: Exception) {
+                logger.warn("Skipping row with invalid params: $record")
+            }
         }
 
-        return FlightPath(points, EARTH_RADIUS)
+        return rows
+    }
+
+    private fun getLatLngInd(headerMap: Map<String, Int>): Pair<Int, Int> {
+        val latKey = headerMap.keys.firstOrNull { header -> header.lowercase().contains("lat") } ?: {
+            logger.error("Failed to find column associated with latitude. Headers: ${headerMap.keys}")
+            error("Failed to find column associated with latitude. Add \'lat\' or \'latitude\' to column header!")
+        }
+        val lngKey = headerMap.keys.firstOrNull { header ->
+            header.lowercase().contains("lon") || header.lowercase().contains("lng")
+        } ?: {
+            logger.error("Failed to find column associated with longitude. Headers: ${headerMap.keys}")
+            error("Failed to find column associated with longitude. " +
+                    "Add \'lon\', \'lng\' or \'longitude\' to column header!")
+        }
+
+        logger.info("Colum headers associated with latitude: \'$latKey\', longitude: \'$lngKey\'")
+        return headerMap.let { it[latKey]!! to it[lngKey]!! }
     }
 
     private fun isValidCoordinate(lat: Double, lng: Double): Boolean {
