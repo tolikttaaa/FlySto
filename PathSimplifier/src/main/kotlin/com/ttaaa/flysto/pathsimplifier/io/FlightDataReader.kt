@@ -13,6 +13,8 @@ object FlightDataReader {
     private val logger = LoggerFactory.getLogger(FlightDataReader::class.java)
 
     fun readFlightPath(filename: String): FlightPath {
+        logger.info("Reading flight path from file: $filename")
+
         var points = listOf<SphericalPoint>()
 
         try {
@@ -52,7 +54,7 @@ object FlightDataReader {
                 val point = SphericalPoint(lat.toDouble(), lng.toDouble())
                 rows.add(point)
                 logger.trace("Processing point: {}", point)
-            } catch (ex: Exception) {
+            } catch (_: Exception) {
                 logger.warn("Skipping row with invalid params: $record")
             }
         }

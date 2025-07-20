@@ -4,14 +4,17 @@ import com.ttaaa.flysto.pathsimplifier.model.FlightPath
 import com.ttaaa.flysto.pathsimplifier.model.SphericalPoint
 import org.slf4j.LoggerFactory
 
-object GreedySimplifier: Simplifier {
+object GreedySimplifier: Simplifier(SimplifierType.GREEDY) {
     private val logger = LoggerFactory.getLogger(GreedySimplifier::class.java)
 
-    override fun simplify(
+    override fun simplifyProcess(
         path: FlightPath,
         maxDeviationKm: Double
     ): FlightPath {
-        logger.info("Simplifying path by Greedy algorithm, with max deviation = ${maxDeviationKm}km")
+        if (path.points.size >= 100_000) {
+            logger.warn("Duration of path simplification by Greedy algorithm may be too long, " +
+                    "due too large amount of points in initial path: ${path.points.size}")
+        }
 
         if (path.points.size <= 2) return path
 
@@ -38,19 +41,6 @@ object GreedySimplifier: Simplifier {
             result.add(path.points[startIndex])
         }
 
-        val simplified = FlightPath(result, path.radius)
-
-        logger.info("Path simplification by Greedy algorithm is done")
-        logger.info("Original points: {}, Simplified: {}, Reduction: {}%",
-            path.points.size,
-            simplified.points.size,
-            ((path.points.size - simplified.points.size) * 100.0 / path.points.size).toInt()
-        )
-        logger.info("Original distance: {}, Simplified: {}, Losses: {}%",
-            path.getTotalLength(),
-            simplified.getTotalLength(),
-            ((path.getTotalLength() - simplified.getTotalLength()) * 100.0 / path.getTotalLength()).toInt()
-        )
-        return simplified
+        return FlightPath(result, path.radius)
     }
 }

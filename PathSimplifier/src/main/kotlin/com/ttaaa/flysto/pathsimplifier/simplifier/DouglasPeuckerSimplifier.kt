@@ -2,17 +2,12 @@ package com.ttaaa.flysto.pathsimplifier.simplifier
 
 import com.ttaaa.flysto.pathsimplifier.model.FlightPath
 import com.ttaaa.flysto.pathsimplifier.model.SphericalPoint
-import org.slf4j.LoggerFactory
 
-object DouglasPeuckerSimplifier: Simplifier {
-    private val logger = LoggerFactory.getLogger(DouglasPeuckerSimplifier::class.java)
-
-    override fun simplify(
+object DouglasPeuckerSimplifier: Simplifier(SimplifierType.DOUGLAS_PEUCKER) {
+    override fun simplifyProcess(
         path: FlightPath,
         maxDeviationKm: Double
     ): FlightPath {
-        logger.info("Simplifying path by Douglas-Peucker algorithm, with max deviation = ${maxDeviationKm}km")
-
         if (path.points.size <= 2) return path
 
         fun douglasPeucker(startIndex: Int, endIndex: Int, maxDeviation: Double): List<SphericalPoint> {
@@ -49,22 +44,8 @@ object DouglasPeuckerSimplifier: Simplifier {
             }
         }
 
-        val simplified = FlightPath(
+        return FlightPath(
             douglasPeucker(startIndex = 0, endIndex = path.points.lastIndex, maxDeviationKm),
             path.radius
-        )
-
-        logger.info("Path simplification by Douglas-Peucker algorithm is done")
-        logger.info("Original points: {}, Simplified: {}, Reduction: {}%",
-            path.points.size,
-            simplified.points.size,
-            ((path.points.size - simplified.points.size) * 100.0 / path.points.size).toInt()
-        )
-        logger.info("Original distance: {}, Simplified: {}, Losses: {}%",
-            path.getTotalLength(),
-            simplified.getTotalLength(),
-            ((path.getTotalLength() - simplified.getTotalLength()) * 100.0 / path.getTotalLength()).toInt()
-        )
-        return simplified
-    }
+        )    }
 }

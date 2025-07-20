@@ -1,9 +1,7 @@
 package com.ttaaa.flysto.pathsimplifier
 
-import com.ttaaa.flysto.pathsimplifier.io.FlightDataGenerator
-import com.ttaaa.flysto.pathsimplifier.io.FlightDataReader
-import com.ttaaa.flysto.pathsimplifier.io.FlightDataWriter
-import com.ttaaa.flysto.pathsimplifier.simplifier.DouglasPeuckerSimplifier
+import com.ttaaa.flysto.pathsimplifier.PathSimplifyingProcess.ProcessInputData
+import com.ttaaa.flysto.pathsimplifier.simplifier.Simplifier.SimplifierType
 import org.slf4j.LoggerFactory
 import picocli.CommandLine
 import picocli.CommandLine.Command
@@ -20,74 +18,65 @@ class PathSimplifierApp : Callable<Int> {
     private val logger = LoggerFactory.getLogger(PathSimplifierApp::class.java)
 
     @Option(
-        names = ["-file"],
+        names = ["-f", "--file"],
         description = ["Path to input csv file"],
-        required = false
     )
     var filePath: String? = null
 
     @Option(
-        names = ["-output"],
+        names = ["-o", "--outputDir"],
         description = ["Path to output directory"],
-        required = false
     )
     var outputDirectory: String? = null
 
     @Option(
-        names = ["-generate"],
+        names = ["-g", "--generate"],
         arity = "1..2", // allow 1 or 2 integers
         description = ["Amount of major way points and total amount of waypoints"],
-        required = false
     )
-    var generationParams: List<Int>? = null
+    var generationParams: List<Int> = emptyList()
 
     @Option(
-        names = ["-deviation"],
+        names = ["-d", "--deviation"],
         description = ["Maximum allowed deviation in kilometers"],
         required = true
     )
     var maxDeviation: Double = 0.0
 
+    @Option(
+        names = ["-a", "--algorithms"],
+        description = ["List of algorithms to run (comma-separated). Default: all"],
+        split = ","
+    )
+    var algorithms: List<SimplifierType> = SimplifierType.entries.toList() // default: all enum values
+
     override fun call(): Int {
-        if ((filePath == null && generationParams == null) || (filePath != null && generationParams != null)) {
-            logger.error("Specify either -file OR -generate (not both)")
+        if (!((filePath == null) xor (generationParams.isEmpty()))) {
+            logger.error("Specify either --file OR --generate (not both)")
             return 1
         }
 
-        if (maxDeviation <= 0.0) {
+        if (maxDeviation < 0) {
             logger.error("Deviation param should not be less than zero")
             return 1
         }
 
         try {
-            process()
+            PathSimplifyingProcess.process(
+                ProcessInputData(
+                    inputFilePath = filePath,
+                    majorWayPointsAmount = generationParams.getOrNull(0),
+                    totalWayPointsAmount = generationParams.getOrNull(1),
+                    outputDirectory = outputDirectory,
+                    maxDeviation = maxDeviation,
+                    simplifierTypes = algorithms
+                )
+            )
         } catch (ex: Exception) {
             logger.error("Error during execution", ex)
             return 1
         }
         return 0
-    }
-
-    private fun process() {
-        val inputFlightPath = if (filePath != null) {
-            FlightDataReader.readFlightPath(filePath!!)
-        } else if (generationParams != null) {
-            when (generationParams!!.size) {
-                1 -> FlightDataGenerator.createFlightPath(generationParams!![0])
-                2 -> FlightDataGenerator.createFlightPath(generationParams!![0], generationParams!![1])
-                else -> {
-                    error("Generate params should be specified correctly")
-                }
-            }
-        } else {
-            error("Application params should be specified correctly")
-        }
-
-        FlightDataWriter.writeFlightPath(inputFlightPath, outputDirectory, "filtered_input.csv")
-
-        val simplifiedPath = DouglasPeuckerSimplifier.simplify(inputFlightPath, maxDeviation)
-
-        FlightDataWriter.writeFlightPath(simplifiedPath, outputDirectory, "simplified_path.csv")
     }
 }
 

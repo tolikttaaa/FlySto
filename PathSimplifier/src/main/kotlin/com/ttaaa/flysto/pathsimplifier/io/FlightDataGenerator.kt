@@ -10,19 +10,14 @@ import kotlin.random.Random
 object FlightDataGenerator {
     private val logger = LoggerFactory.getLogger(FlightDataGenerator::class.java)
 
-    /**
-     * Create a sample flight path for demonstration when no CSV is provided
-     */
     fun createFlightPath(majorWayPointsCount: Int = 10, totalPointsCount: Int? = null): FlightPath {
         logger.info("Creating sample flight path with $majorWayPointsCount major points " +
-                "and total amount $totalPointsCount")
+                "and total amount ${totalPointsCount ?: majorWayPointsCount}")
 
         val points = mutableListOf<SphericalPoint>()
 
-        // Define major waypoints for a complex route
         val majorWaypoints = List(majorWayPointsCount) { generateSphericalPoint() }
-
-        var waypointsLeft = max(majorWayPointsCount, totalPointsCount ?: ((majorWayPointsCount - 1) * 100 + 1))
+        var waypointsLeft = max(majorWayPointsCount, totalPointsCount ?: majorWayPointsCount)
 
         // Create long straight segments with high sampling rate
         for (i in 0 until majorWaypoints.size - 1) {
