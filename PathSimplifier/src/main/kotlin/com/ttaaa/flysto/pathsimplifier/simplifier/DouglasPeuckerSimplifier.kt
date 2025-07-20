@@ -7,16 +7,11 @@ import org.slf4j.LoggerFactory
 object DouglasPeuckerSimplifier: Simplifier {
     private val logger = LoggerFactory.getLogger(DouglasPeuckerSimplifier::class.java)
 
-    /**
-     * Simplify the flight path using Douglas-Peucker algorithm
-     * @param maxDeviationKm Maximum allowed deviation in kilometers
-     * @return Simplified flight path
-     */
     override fun simplify(
         path: FlightPath,
         maxDeviationKm: Double
     ): FlightPath {
-        logger.info("Simplifying path, with max deviation = ${maxDeviationKm}km")
+        logger.info("Simplifying path by Douglas-Peucker algorithm, with max deviation = ${maxDeviationKm}km")
 
         if (path.points.size <= 2) return path
 
@@ -59,7 +54,7 @@ object DouglasPeuckerSimplifier: Simplifier {
             path.radius
         )
 
-        logger.info("Path simplification is done")
+        logger.info("Path simplification by Douglas-Peucker algorithm is done")
         logger.info("Original points: {}, Simplified: {}, Reduction: {}%",
             path.points.size,
             simplified.points.size,
