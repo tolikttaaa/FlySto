@@ -4,7 +4,6 @@ plugins {
 }
 
 group = "com.ttaaa.flysto"
-version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -29,7 +28,7 @@ dependencies {
 }
 
 application {
-    mainClass.set("com.ttaaa.FlySto.PathSimplifier.PathSimplifierAppKt")
+    mainClass.set("com.ttaaa.flysto.pathsimplifier.PathSimplifierAppKt")
 }
 
 tasks.test {

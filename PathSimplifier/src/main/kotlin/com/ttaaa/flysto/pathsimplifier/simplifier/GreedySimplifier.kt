@@ -4,7 +4,7 @@ import com.ttaaa.flysto.pathsimplifier.model.FlightPath
 import com.ttaaa.flysto.pathsimplifier.model.SphericalPoint
 import org.slf4j.LoggerFactory
 
-object GreedySimplifier: Simplifier(SimplifierType.GREEDY) {
+object GreedySimplifier : Simplifier(SimplifierType.GREEDY) {
     private val logger = LoggerFactory.getLogger(GreedySimplifier::class.java)
 
     override fun simplifyProcess(
@@ -12,8 +12,10 @@ object GreedySimplifier: Simplifier(SimplifierType.GREEDY) {
         maxDeviationKm: Double
     ): FlightPath {
         if (path.points.size >= 100_000) {
-            logger.warn("Duration of path simplification by Greedy algorithm may be too long, " +
-                    "due too large amount of points in initial path: ${path.points.size}")
+            logger.warn(
+                "Duration of path simplification by Greedy algorithm may be too long, " +
+                        "due too large amount of points in initial path: ${path.points.size}"
+            )
         }
 
         if (path.points.size <= 2) return path

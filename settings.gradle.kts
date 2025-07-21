@@ -3,4 +3,3 @@ plugins {
 }
 rootProject.name = "FlySto"
 include("PathSimplifier")
-include("PathVisualizer")

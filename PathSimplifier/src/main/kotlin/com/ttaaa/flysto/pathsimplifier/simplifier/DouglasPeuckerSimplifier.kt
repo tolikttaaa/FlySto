@@ -3,7 +3,7 @@ package com.ttaaa.flysto.pathsimplifier.simplifier
 import com.ttaaa.flysto.pathsimplifier.model.FlightPath
 import com.ttaaa.flysto.pathsimplifier.model.SphericalPoint
 
-object DouglasPeuckerSimplifier: Simplifier(SimplifierType.DOUGLAS_PEUCKER) {
+object DouglasPeuckerSimplifier : Simplifier(SimplifierType.DOUGLAS_PEUCKER) {
     override fun simplifyProcess(
         path: FlightPath,
         maxDeviationKm: Double
@@ -47,5 +47,6 @@ object DouglasPeuckerSimplifier: Simplifier(SimplifierType.DOUGLAS_PEUCKER) {
         return FlightPath(
             douglasPeucker(startIndex = 0, endIndex = path.points.lastIndex, maxDeviationKm),
             path.radius
-        )    }
+        )
+    }
 }

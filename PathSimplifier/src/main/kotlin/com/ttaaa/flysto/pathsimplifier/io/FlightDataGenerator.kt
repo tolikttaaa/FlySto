@@ -11,8 +11,10 @@ object FlightDataGenerator {
     private val logger = LoggerFactory.getLogger(FlightDataGenerator::class.java)
 
     fun createFlightPath(majorWayPointsCount: Int = 10, totalPointsCount: Int? = null): FlightPath {
-        logger.info("Creating sample flight path with $majorWayPointsCount major points " +
-                "and total amount ${totalPointsCount ?: majorWayPointsCount}")
+        logger.info(
+            "Creating sample flight path with $majorWayPointsCount major points " +
+                    "and total amount ${totalPointsCount ?: majorWayPointsCount}"
+        )
 
         val points = mutableListOf<SphericalPoint>()
 
