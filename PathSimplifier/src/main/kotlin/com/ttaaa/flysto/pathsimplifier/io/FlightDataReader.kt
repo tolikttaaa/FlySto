@@ -71,8 +71,10 @@ object FlightDataReader {
             header.lowercase().contains("lon") || header.lowercase().contains("lng")
         } ?: {
             logger.error("Failed to find column associated with longitude. Headers: ${headerMap.keys}")
-            error("Failed to find column associated with longitude. " +
-                    "Add \'lon\', \'lng\' or \'longitude\' to column header!")
+            error(
+                "Failed to find column associated with longitude. " +
+                        "Add \'lon\', \'lng\' or \'longitude\' to column header!"
+            )
         }
 
         logger.info("Colum headers associated with latitude: \'$latKey\', longitude: \'$lngKey\'")

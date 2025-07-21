@@ -19,45 +19,45 @@ class PathSimplifierApp : Callable<Int> {
 
     @Option(
         names = ["-f", "--file"],
-        description = ["Path to input csv file"],
+        description = ["Path to input csv file."],
     )
     var filePath: String? = null
 
     @Option(
         names = ["-o", "--outputDir"],
-        description = ["Path to output directory"],
+        description = ["Path to output directory."],
     )
     var outputDirectory: String? = null
 
     @Option(
         names = ["-g", "--generate"],
         arity = "1..2", // allow 1 or 2 integers
-        description = ["Amount of major way points and total amount of waypoints"],
+        description = ["Amount of major way points and total amount of waypoints to generate."],
     )
     var generationParams: List<Int> = emptyList()
 
     @Option(
         names = ["-d", "--deviation"],
-        description = ["Maximum allowed deviation in kilometers"],
+        description = ["Maximum allowed deviation in kilometers."],
         required = true
     )
     var maxDeviation: Double = 0.0
 
     @Option(
         names = ["-a", "--algorithms"],
-        description = ["List of algorithms to run (comma-separated). Default: all"],
+        description = ["List of algorithms to run (comma-separated). Default: all existing algorithms."],
         split = ","
     )
     var algorithms: List<SimplifierType> = SimplifierType.entries.toList() // default: all enum values
 
     override fun call(): Int {
         if (!((filePath == null) xor (generationParams.isEmpty()))) {
-            logger.error("Specify either --file OR --generate (not both)")
+            logger.error("Specify either --file OR --generate (not both)!")
             return 1
         }
 
         if (maxDeviation < 0) {
-            logger.error("Deviation param should not be less than zero")
+            logger.error("Deviation param should not be less than zero!")
             return 1
         }
 
