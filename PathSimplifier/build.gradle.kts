@@ -24,7 +24,13 @@ dependencies {
     // Apache Common CSV
     implementation("org.apache.commons:commons-csv:1.10.0")
 
+    // For JUnit 5
     testImplementation(kotlin("test"))
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    // MockK
+    testImplementation("io.mockk:mockk:1.13.10")
+    // For AssertJ, for fluent and readable assertions
+    testImplementation("org.assertj:assertj-core:3.25.3")
 }
 
 application {

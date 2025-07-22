@@ -1,6 +1,7 @@
 package com.ttaaa.flysto.pathsimplifier.model
 
 import com.ttaaa.flysto.pathsimplifier.utils.EARTH_RADIUS
+import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.acos
 import kotlin.math.asin
@@ -18,24 +19,35 @@ open class SphericalPoint(
         segEnd: SphericalPoint,
         radius: Double = EARTH_RADIUS,
     ): Double {
-        // Angular distance from start to end
         val angDistStartToPoint = angularDistance(segStart, this)
+        // If the point is the start of the segment, distance is 0
+        if (angDistStartToPoint == 0.0) return 0.0
+
         val initialBearingStartToPoint = initialBearing(segStart, this)
         val initialBearingStartToEnd = initialBearing(segStart, segEnd)
 
-        // Cross-track distance
-        val dXt = asin(sin(angDistStartToPoint) * sin(initialBearingStartToPoint - initialBearingStartToEnd)) * radius
+        // Angular cross-track distance
+        val angDistXt = asin(sin(angDistStartToPoint) * sin(initialBearingStartToPoint - initialBearingStartToEnd))
 
-        // Along-track distance (how far along the segment the projection lies)
-        val dAt = acos(cos(angDistStartToPoint) / cos(dXt / radius)) * radius
+        // Angular along-track distance
+        var angDistAt = acos(cos(angDistStartToPoint) / cos(angDistXt))
 
-        // Total segment length
-        val segmentLength = angularDistance(segStart, segEnd) * radius
+        // The point's projection is "behind" the start point if the bearing difference is obtuse.
+        // In this case, we consider the along-track distance negative.
+        if (abs(initialBearingStartToEnd - initialBearingStartToPoint) > PI / 2) {
+            angDistAt = -angDistAt
+        }
+
+        val dAt = angDistAt * radius
+        val segmentLength = haversineDistance(segStart, segEnd, radius)
 
         return when {
-            dAt < 0 -> haversineDistance(this, segStart)
-            dAt > segmentLength -> haversineDistance(this, segEnd)
-            else -> abs(dXt)
+            // The Projection is before the start of the segment
+            dAt < 0 -> haversineDistance(this, segStart, radius)
+            // The Projection is after the end of the segment
+            dAt > segmentLength -> haversineDistance(this, segEnd, radius)
+            // The Projection is on the segment; return the cross-track distance
+            else -> abs(angDistXt * radius)
         }
     }
 
